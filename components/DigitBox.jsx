@@ -1,5 +1,17 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import React from 'react';
+
+import {
+  ImageBackground,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+
+const bg1 = require('../assets/backgound1.jpg');
+const bg2 = require('../assets/backgound2.jpg');
+const bg3 = require('../assets/backgound3.jpg');
+const bg4 = require('../assets/backgound4.jpg');
 
 const DigitBox = ({
   value,
@@ -26,13 +38,6 @@ const DigitBox = ({
         colIndex % 3 == 2 && colIndex != 8 ? '#5b99b3' : '#204153',
       borderBottomColor:
         rowIndex % 3 == 2 && rowIndex != 8 ? '#5b99b3' : '#204153',
-      backgroundColor: isActive ? '#273e4c' : '#1c242f',
-      backgroundColor:
-        isError && solid
-          ? 'rgba(255, 100, 0,0.7)'
-          : isError
-          ? 'rgba(255, 0, 0,0.7)'
-          : '#1c242f',
     },
     text: {
       textAlign: 'center',
@@ -43,18 +48,26 @@ const DigitBox = ({
 
   return (
     <TouchableOpacity
+      activeOpacity={0.9}
       onPress={() => {
         // console.log('Error State:', isError);
         handleCellPress(rowIndex, colIndex);
       }}>
-      <View style={styles.cell}>
-        <Text
-          style={styles.text}
-          // onPress={() => handleCellPress(rowIndex, colIndex)}
-        >
-          {value === 0 ? '' : value}
-        </Text>
-      </View>
+      <ImageBackground
+        source={
+          solid && isError
+            ? bg2
+            : isError
+            ? bg1
+            : isActive && value !== null
+            ? bg4
+            : bg3
+        }
+        resizeMode="cover">
+        <View style={styles.cell}>
+          <Text style={styles.text}>{value === 0 ? '' : value}</Text>
+        </View>
+      </ImageBackground>
     </TouchableOpacity>
   );
 };

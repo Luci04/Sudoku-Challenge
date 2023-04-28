@@ -17,6 +17,8 @@ import {
   View,
 } from 'react-native';
 import SudokuBox from './components/SudokuBox';
+import { Provider } from 'react-redux';
+import store from './store';
 
 import {
   Colors,
@@ -40,32 +42,18 @@ function App(): JSX.Element {
   };
 
   return (
+    <Provider store={store} >
     <SafeAreaView style={styles.backgroundStyle}>
       <SudokuBox/>
     </SafeAreaView>
+    </Provider>
   );
 }
 
 const styles = StyleSheet.create({
   backgroundStyle:{
     flex:1,
-  },
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
+  }
 });
 
 export default App;
