@@ -1,20 +1,27 @@
-import {
-  StyleSheet,
-  Text,
-  Touchable,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import React from 'react';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {memo, useEffect} from 'react';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+import {useSelector} from 'react-redux';
 
-const NumberCell = ({value, isActive, setSelectedNum, isDisable}) => {
+const NumberCell = memo(({value, setSelectedNum}) => {
+  const {remainDigits} = useSelector(state => state.remainReducer);
+
+  const {selectedNum} = useSelector(state => state.sudokuReducer);
+
+  const isDisable = remainDigits[value] <= 0;
+
+  const isActive = selectedNum === value;
+
+  // console.log(value);
+
+  useEffect(() => {}, [remainDigits]);
+
   return (
     <TouchableOpacity
       activeOpacity={0.8}
       onPress={() => {
-        console.log(value);
+        // console.log(value);
         setSelectedNum(value);
       }}>
       <View
@@ -44,7 +51,7 @@ const NumberCell = ({value, isActive, setSelectedNum, isDisable}) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 export default NumberCell;
 

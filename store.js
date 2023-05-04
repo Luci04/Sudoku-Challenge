@@ -1,10 +1,10 @@
 import { createStore, combineReducers, applyMiddleware } from 'redux'
 import thunk from 'redux-thunk'
-import { sudokuReducer } from './reducers/sudokuReducer';
-
+import { sudokuReducer, boardReducer, remainReducer, solidReducer, errorRowReducer, errorColReducer, timerReducer, hasWonReducer } from './reducers/sudokuReducer';
+import { } from './reducers/sudokuReducer';
 const initialState = {};
 
-const reducer = combineReducers({ sudokuReducer });
+const reducer = combineReducers({ sudokuReducer, boardReducer, remainReducer, solidReducer, errorRowReducer, errorColReducer, timerReducer, hasWonReducer });
 
 const middleware = [thunk];
 

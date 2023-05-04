@@ -1,11 +1,72 @@
 import {StyleSheet, Text, Modal, View, Button, Pressable} from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import ShareExample from './ShareBtn';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const CompletedModal = ({won, setHaveWon}) => {
+const CompletedModal = ({won, setHaveWon, handleNotification}) => {
+  function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  const [timeTaken, setTimeTaken] = useState({});
+
+  const handleStoringDate = async () => {
+    const prevDate = await AsyncStorage.getItem('sudoku-challenge-dates');
+
+    const period = await AsyncStorage.getItem('sudoku-challenge-period');
+
+    const dates = prevDate ? JSON.parse(prevDate) : [];
+
+    const consistency = period ? JSON.parse(period) + 1 : 0;
+
+    await AsyncStorage.setItem(
+      'sudoku-challenge-period',
+      JSON.stringify(consistency),
+    );
+
+    const today = new Date();
+
+    const formattedDate = formatDate(today);
+
+    if (dates.length > 0 && dates[dates.length - 1] === formattedDate) return;
+
+    dates.push(formattedDate);
+
+    await AsyncStorage.setItem('sudoku-challenge-dates', JSON.stringify(dates));
+  };
+
+  function getDateTimeDifference(date1Str) {
+    const date1 = new Date(date1Str);
+    const date2 = new Date();
+
+    const diffTime = Math.abs(date2 - date1);
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    const diffMinutes = Math.floor((diffTime % (1000 * 60 * 60)) / (1000 * 60));
+    const diffSeconds = Math.floor((diffTime % (1000 * 60)) / 1000);
+
+    return [diffHours, diffMinutes, diffSeconds];
+  }
+
+  useEffect(() => {
+    AsyncStorage.getItem('GAME_START_TIME')
+      .then(data => JSON.parse(data))
+      .then(data => {
+        const time = getDateTimeDifference(data);
+        return time;
+      })
+      .then(data => setTimeTaken(data))
+      .catch(e => {
+        console.log('Error', e);
+      });
+    return () => {};
+  }, []);
+
   return (
     <View>
       <Modal
@@ -13,7 +74,7 @@ const CompletedModal = ({won, setHaveWon}) => {
         visible={won}
         transparent={true}
         onRequestClose={() => {
-          console.log('Modal has been closed.');
+          // console.log('Modal has been closed.');
         }}>
         <View style={styles.modal}>
           <View style={styles.modalContainer}>
@@ -56,9 +117,13 @@ const CompletedModal = ({won, setHaveWon}) => {
                     alignItems: 'center',
                   }}>
                   <AntDesign name="clockcircleo" size={30} color="#a85ce8" />
-                  <Text>Time</Text>
+                  {/* <Text>{timeTaken}</Text> */}
                 </View>
-                <Text>00:42:30</Text>
+                {timeTaken && (
+                  <Text>
+                    {timeTaken[0]} : {timeTaken[1]} : {timeTaken[2]}
+                  </Text>
+                )}
               </View>
               <View
                 style={{
@@ -98,8 +163,10 @@ const CompletedModal = ({won, setHaveWon}) => {
                   borderRadius: 25,
                   fontSize: 20,
                 }}
-                onPress={() => {
+                onPress={async () => {
+                  handleNotification({name: 'AVinash', message: 'Have Won !'});
                   setHaveWon(false);
+                  await handleStoringDate();
                 }}>
                 <Text>Done</Text>
               </Pressable>

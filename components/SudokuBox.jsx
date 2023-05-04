@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {StyleSheet, View, Text, Modal, Button, Pressable} from 'react-native';
 import DigitBox from './DigitBox';
 import NumberCell from './NumberCell';
@@ -7,12 +7,16 @@ import {solveSudoku} from './importantFunctions';
 // import TimeClock from './Timer';
 import NumberPad from './NumberPad';
 import {useSelector, useDispatch} from 'react-redux';
+import PushNotification from 'react-native-push-notification';
+import TimeClock from './Timer';
 
 const SudokuBox = () => {
   const dispatch = useDispatch();
+  //Time Controller
+  const [startTime, setStartTime] = useState(false);
 
   //Have Won Or not
-  const [haveWon, setHaveWon] = useState(true);
+  const {hasWon} = useSelector(state => state.hasWonReducer);
 
   //Selected Number from Numpad
   // const [selectedNum, handleSelectedNum] = useState(null);
@@ -23,46 +27,34 @@ const SudokuBox = () => {
     dispatch({type: 'SET_NUM', payload: num});
   };
 
+  //Sudoku Problem Board
+  const {board} = useSelector(state => state.boardReducer);
+
   //Remaining Digits to Fill
-  const [remainDigits, setRemainDigits] = useState({
-    1: 9,
-    2: 9,
-    3: 9,
-    4: 9,
-    5: 9,
-    6: 9,
-    7: 9,
-    8: 9,
-    9: 9,
-  });
+  const {remainDigits} = useSelector(state => state.remainReducer);
+
+  //All Solid Digits That Never Changes
+  const {solidBoard} = useSelector(state => state.solidReducer);
+
+  //Each Digit Matrix Number
+  const matrixNumber = [
+    [0, 0, 0, 1, 1, 1, 2, 2, 2],
+    [0, 0, 0, 1, 1, 1, 2, 2, 2],
+    [0, 0, 0, 1, 1, 1, 2, 2, 2],
+    [3, 3, 3, 4, 4, 4, 5, 5, 5],
+    [3, 3, 3, 4, 4, 4, 5, 5, 5],
+    [3, 3, 3, 4, 4, 4, 5, 5, 5],
+    [6, 6, 6, 7, 7, 7, 8, 8, 8],
+    [6, 6, 6, 7, 7, 7, 8, 8, 8],
+    [6, 6, 6, 7, 7, 7, 8, 8, 8],
+  ];
 
   //Error in Rows
-  const [errorRows, setErrorRows] = useState({
-    0: 0,
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0,
-    5: 0,
-    6: 0,
-    7: 0,
-    8: 0,
-    9: 0,
-  });
+  const {errorRows} = useSelector(state => state.errorRowReducer);
 
   //Error in Cols
-  const [errorCols, setErrorCols] = useState({
-    0: 0,
-    1: 0,
-    2: 0,
-    3: 0,
-    4: 0,
-    5: 0,
-    6: 0,
-    7: 0,
-    8: 0,
-    9: 0,
-  });
+
+  const {errorCols} = useSelector(state => state.errorColReducer);
 
   //Error in Matrix
   const [errorMatrix, setErrorMatrix] = useState({
@@ -78,61 +70,24 @@ const SudokuBox = () => {
     9: 0,
   });
 
-  //Sudoku Problem Board
-  const [board, setBoard] = useState([
-    [5, 3, 0, 0, 7, 0, 0, 0, 0],
-    [6, 0, 0, 1, 9, 5, 0, 0, 0],
-    [0, 9, 8, 0, 0, 0, 0, 6, 0],
-    [8, 0, 0, 0, 6, 0, 0, 0, 3],
-    [4, 0, 0, 8, 0, 3, 0, 0, 1],
-    [7, 0, 0, 0, 2, 0, 0, 0, 6],
-    [0, 6, 0, 0, 0, 0, 2, 8, 0],
-    [0, 0, 0, 4, 1, 9, 0, 0, 5],
-    [0, 0, 0, 0, 8, 0, 0, 7, 9],
-  ]);
-
-  //Each Digit Matrix Number
-  const [matrixNumber, setMatrixNumber] = useState([
-    [0, 0, 0, 1, 1, 1, 2, 2, 2],
-    [0, 0, 0, 1, 1, 1, 2, 2, 2],
-    [0, 0, 0, 1, 1, 1, 2, 2, 2],
-    [3, 3, 3, 4, 4, 4, 5, 5, 5],
-    [3, 3, 3, 4, 4, 4, 5, 5, 5],
-    [3, 3, 3, 4, 4, 4, 5, 5, 5],
-    [6, 6, 6, 7, 7, 7, 8, 8, 8],
-    [6, 6, 6, 7, 7, 7, 8, 8, 8],
-    [6, 6, 6, 7, 7, 7, 8, 8, 8],
-  ]);
-
-  //All Solid Digits That Never Changes
-  const [solidBoard, setSolidBoard] = useState([
-    [0, 0, 0, 1, 1, 1, 2, 2, 2],
-    [0, 0, 0, 1, 1, 1, 2, 2, 2],
-    [0, 0, 0, 1, 1, 1, 2, 2, 2],
-    [3, 3, 3, 4, 4, 4, 5, 5, 5],
-    [3, 3, 3, 4, 4, 4, 5, 5, 5],
-    [3, 3, 3, 4, 4, 4, 5, 5, 5],
-    [6, 6, 6, 7, 7, 7, 8, 8, 8],
-    [6, 6, 6, 7, 7, 7, 8, 8, 8],
-    [6, 6, 6, 7, 7, 7, 8, 8, 8],
-  ]);
+  const handleNotification = item => {
+    PushNotification.localNotification({
+      channelId: 'test-Channel',
+      title: 'You Won this Time !',
+      message: `${item.name} ${item.message}`,
+    });
+  };
 
   useEffect(() => {
-    const tempSolid = [];
     const tempRemainDigits = {...remainDigits};
 
     for (let i = 0; i < board.length; i++) {
-      tempSolid[i] = [];
       for (let j = 0; j < board[i].length; j++) {
-        tempSolid[i][j] = board[i][j] !== 0;
         tempRemainDigits[board[i][j]]--;
       }
     }
-    setRemainDigits(tempRemainDigits);
-    setSolidBoard(tempSolid);
+    dispatch({type: 'SET_REMAIN', payload: tempRemainDigits});
   }, []);
-
-  const numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 'Edit', 'Erase', 'Back'];
 
   function RowError(currBoard, value, row, col) {
     const countMap = {
@@ -161,15 +116,15 @@ const SudokuBox = () => {
       }
     }
 
+    const tempRowError = {...errorRows};
+
     if (hasError) {
-      const tempRowError = {...errorRows};
       tempRowError[row] = 1;
-      setErrorRows(tempRowError);
+      dispatch({type: 'SET_ERROR_ROW', payload: {...tempRowError}});
       return true;
     } else {
-      const tempRowError = {...errorRows};
       tempRowError[row] = 0;
-      setErrorRows(tempRowError);
+      dispatch({type: 'SET_ERROR_ROW', payload: {...tempRowError}});
       return false;
     }
   }
@@ -201,22 +156,18 @@ const SudokuBox = () => {
       }
     }
 
+    const tempColError = {...errorCols};
+
     if (hasError) {
-      const tempColError = {...errorCols};
       tempColError[col] = 1;
-      setErrorCols(tempColError);
+      dispatch({type: 'SET_ERROR_COL', payload: tempColError});
       return true;
     } else {
-      const tempColError = {...errorCols};
       tempColError[col] = 0;
-      setErrorCols(tempColError);
+      dispatch({type: 'SET_ERROR_COL', payload: tempColError});
       return false;
     }
   }
-
-  useEffect(() => {
-    setBoard;
-  }, [board]);
 
   function findMatrix(row, col) {
     // Calculate the row and column indices of the top-left cell of the matrix
@@ -267,7 +218,7 @@ const SudokuBox = () => {
       const MatrixNumber = findMatrix(row, col);
       tempMatrixError[MatrixNumber] = 1;
       setErrorMatrix(tempMatrixError);
-      console.log(tempMatrixError);
+
       return true;
     } else {
       const MatrixNumber = findMatrix(row, col);
@@ -283,11 +234,11 @@ const SudokuBox = () => {
     count += 1 && ColError(currBoard, value, row, col);
     count += 1 && MatrixError(currBoard, value, row, col);
 
-    return count == 3;
+    return count === 3;
   }
 
-  function handleCellPress(row, col, back, edit) {
-    if (solidBoard[row][col]) {
+  const handleCellPress = (row, col, back, edit) => {
+    if (solidBoard[row][col] !== 0) {
       return;
     }
 
@@ -317,8 +268,8 @@ const SudokuBox = () => {
       }
     }
 
-    setBoard(currBoard);
-    setRemainDigits(currRemainDigits);
+    dispatch({type: 'SET_BOARD', payload: currBoard});
+    dispatch({type: 'SET_REMAIN', payload: currRemainDigits});
     if (!findError(currBoard, selectedNum, row, col)) {
       let sum = 0;
 
@@ -327,31 +278,38 @@ const SudokuBox = () => {
       }
 
       if (sum == 0) {
-        setHaveWon(true);
+        dispatch({type: 'SET_HAS_WON', payload: true});
       }
     }
-  }
+  };
 
-  useEffect(() => {}, [selectedNum, dispatch]);
+  useEffect(() => {}, [errorRows, errorCols, dispatch]);
+
+  const setHaveWon = data => {
+    dispatch({type: 'SET_HAS_WON', payload: data});
+  };
 
   return (
     <View style={styles.container}>
-      {/* <TimeClock /> */}
-      <CompletedModal setHaveWon={setHaveWon} won={haveWon} />
+      <TimeClock startTime={startTime} />
+      <CompletedModal
+        handleNotification={handleNotification}
+        setHaveWon={setHaveWon}
+        won={hasWon}
+      />
       <View>
         {board.map((row, rowIndex) => (
           <View style={styles.row} key={rowIndex}>
             {row.map((value, colIndex) => (
               <DigitBox
                 handleCellPress={handleCellPress}
-                isActive={selectedNum === value}
                 key={`${rowIndex}-${colIndex}`}
                 rowIndex={rowIndex}
                 colIndex={colIndex}
                 solid={solidBoard[rowIndex][colIndex]}
                 isError={
-                  errorRows[rowIndex] >= 1 ||
                   errorCols[colIndex] >= 1 ||
+                  errorRows[rowIndex] >= 1 ||
                   errorMatrix[matrixNumber[rowIndex][colIndex]] >= 1
                 }
                 value={value}
@@ -361,8 +319,6 @@ const SudokuBox = () => {
         ))}
       </View>
 
-      <NumberPad remainDigits={remainDigits} />
-
       {/* <View style={{backgroundColor: 'green'}}>
         <Pressable
           onPress={() => {
@@ -371,6 +327,8 @@ const SudokuBox = () => {
           <Text style={{color: 'white', padding: 50}}>Solve it</Text>
         </Pressable>
       </View> */}
+
+      <NumberPad />
     </View>
   );
 };
@@ -379,7 +337,8 @@ const styles = StyleSheet.create({
   container: {
     display: 'flex',
     flex: 1,
-    justifyContent: 'space-evenly',
+    justifyContent: 'space-between',
+    gap: 20,
     alignItems: 'center',
   },
   row: {

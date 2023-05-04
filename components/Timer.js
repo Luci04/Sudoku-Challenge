@@ -1,23 +1,36 @@
 import { Stopwatch, Timer } from 'react-native-stopwatch-timer'
 import { StyleSheet, Text, View } from 'react-native'
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import Ionicons from 'react-native-vector-icons/Ionicons'
+import { useSelector } from 'react-redux'
 
-const options = {
-    container: {
-        backgroundColor: 'transparent'
-    },
-    text: {
-        fontSize: 20,
-        color: '#b0c8e2',
-    }
-};
 
 const TimeClock = () => {
+
+    const [time, setTime] = useState(0)
+
+    const { startTime } = useSelector((state) => {
+        return state.timerReducer
+    });
+
+
+    useEffect(() => {
+        let st
+        if (startTime) {
+            st = setInterval(() => {
+                setTime(time + 1);
+            }, 1000)
+
+        }
+        return () => {
+            clearInterval(st);
+        }
+    }, [startTime, time])
+
     return (
         <View style={styles.timerContainer}>
             <Ionicons name="time-outline" size={30} color="#d195f5" />
-            <Stopwatch options={options} hour={false} start={true} msecs={false} />
+            <Text style={styles.time}>{Math.floor(time / 60)}:{Math.floor(time) % 60}</Text>
         </View>
     )
 }
@@ -30,6 +43,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 10
+        gap: 10,
+        marginTop: 20,
+    },
+    time: {
+        color: '#8899a2',
+        fontSize: 25
     }
 })
